@@ -1,0 +1,185 @@
+﻿@model IEnumerable<商品展示系統.Models.Product>
+
+@{
+    ViewData["Title"] = "主頁";
+    var searchString = Context.Request.Query["searchString"].ToString();
+    var isSearching = !string.IsNullOrEmpty(searchString);
+}
+
+<div class="container mt-4">
+    <h1 class="display-5 text-center mb-2 fw-bold">商品展示</h1>
+
+    @if (isSearching)
+    {
+        <div class="text-center mb-4">
+            @if (Model.Any())
+            {
+                @* 情況 A：搜尋有結果 *@
+                <div class="text-center mb-4">
+                    <span class="badge bg-light text-dark p-2 border">
+                        關鍵字「@Context.Request.Query["searchString"]」: 找到 @Model.Count() 筆
+                        <a asp-action="Index" class="ms-2 text-danger text-decoration-none">清除</a>
+                    </span>
+                </div>
+            }
+            else
+            {
+                @* 情況 B：搜尋無結果 (顯示黃色警告) *@
+                <div class="text-center mt-5 py-5">
+                    <h3 class="text-muted">找不到符合條件商品</h3>
+                    <a asp-action="Index" class="btn btn-outline-primary mt-3">查看所有商品</a>
+                </div>
+            }
+        </div>
+    }
+
+    @* --- 商品卡片列表 --- *@
+    @if (Model.Any())
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 product-card">
+                        <div class="card-img-container">
+                            <img src="@item.Prod_Image_Url"
+                                 class="card-img-top"
+                                 alt="@item.Prod_Name"
+                                 onerror="this.src='https://placehold.co/300x300?text=圖片路徑失效'">
+                        </div>
+                        @{
+                            bool isFavorited = ViewBag.FavoriteIds != null && ((List<int>)ViewBag.FavoriteIds).Contains(item.Prod_Id);
+                        }
+                        <div class="favorite-heart-pos">
+                            <i id="heart-@item.Prod_Id"
+                               class="bi @(isFavorited ? "bi-heart-fill" : "bi-heart") text-danger"
+                               onclick="handleFavorite(@item.Prod_Id)"></i>
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title fw-bold mb-0">@item.Prod_Name</h5>
+                                <span class="badge bg-light text-secondary border">@item.Prod_Brand</span>
+                            </div>
+
+                            <p class="card-text text-muted small mt-2">@item.Prod_Specification</p>
+
+                            <div class="mt-auto pt-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-danger fs-4 fw-bold">NT$ @item.Prod_Price.ToString("N0")</span>
+                                    <a href="@item.Prod_Url" target="_blank" class="btn btn-primary btn-sm px-3">
+                                        <i class="bi bi-cart-fill"></i> 前往購買
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (!isSearching)
+    {
+        @* 情況 C：沒搜尋，但資料庫本身就是空的 *@
+        <div class="text-center mt-5 py-5">
+            <i class="bi bi-box-seam display-1 text-muted"></i>
+            <h3 class="text-muted mt-3">目前商城內暫無商品</h3>
+        </div>
+    }
+</div>
+
+<script>
+    function handleFavorite(productId) {
+        // 檢查登入狀態 (Session)
+        var userId = '@Context.Session.GetInt32("UserId")';
+        if (!userId) {
+            alert("請先登入會員，才能收藏商品喔！");
+            window.location.href = '/Account/Login';
+            return;
+        }
+
+        // 發送非同步請求到後端 (路徑請確保與你的 Controller Action 一致)
+        fetch('/MyFavorite/ToggleFavorite?prodId=' + productId, {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    var icon = document.getElementById('heart-' + productId);
+                    if (data.status === "added") {
+                        icon.classList.replace('bi-heart', 'bi-heart-fill');
+                    } else {
+                        icon.classList.replace('bi-heart-fill', 'bi-heart');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("操作失敗，請確認網路連線或路徑設定");
+            });
+    }
+</script>
+
+<style>
+    /* Notion 風格細節與卡片整齊化 */
+    .product-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        border-radius: 12px;
+    }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12) !important;
+        }
+
+    .card-img-container {
+        height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fff;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .card-img-top {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .card-title {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: 1.1rem;
+        line-height: 1.4;
+    }
+    /* --- 【新增：愛心定位樣式】 --- */
+    .favorite-heart-pos {
+        position: absolute;
+        right: 20px; /* 距離右邊 15px */
+        bottom: 200px; /* 距離下邊 10px */
+        background: rgba(255, 255, 255, 0.8); /* 半透明白色背景，讓愛心更明顯 */
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%; /* 圓形背景 */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 10; /* 確保在圖片上方 */
+    }
+
+        .favorite-heart-pos:hover {
+            transform: scale(1.1); /* 移上去稍微放大 */
+            background: #fff;
+        }
+
+        .favorite-heart-pos i {
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+</style>

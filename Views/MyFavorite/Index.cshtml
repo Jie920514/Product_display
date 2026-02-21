@@ -1,0 +1,136 @@
+﻿@model IEnumerable<商品展示系統.Models.Product>
+
+@{
+    ViewData["Title"] = "我的最愛";
+}
+
+<div class="container mt-4">
+    <h1 class="display-5 text-center mb-4 fw-bold">我的最愛</h1>
+
+    @if (!Model.Any())
+    {
+        @* 情況：沒收藏商品時的提示 (與主頁風格一致) *@
+        <div class="text-center mt-5 py-5">
+            <i class="bi bi-heartbreak display-1 text-muted"></i>
+            <h3 class="text-muted mt-3">目前沒有收藏的商品</h3>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary mt-3">去首頁逛逛</a>
+        </div>
+    }
+    else
+    {
+        @* --- 使用與主頁完全相同的 row 排版 --- *@
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var item in Model)
+            {
+                @* 【重要】加上 id，讓 JS 移除時能找到整張卡片 *@
+                <div class="col" id="fav-item-@item.Prod_Id">
+                    <div class="card h-100 shadow-sm border-0 product-card">
+
+                        @* --- 圖片容器 (複製自主頁) --- *@
+                        <div class="card-img-container">
+                            <img src="@item.Prod_Image_Url"
+                                 class="card-img-top"
+                                 alt="@item.Prod_Name"
+                                 onerror="this.src='https://placehold.co/300x300?text=圖片路徑失效'">
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title fw-bold mb-0">@item.Prod_Name</h5>
+
+                                @* --- 【愛心按鈕】因為在此頁面，預設必為實心 --- *@
+                                <i id="heart-@item.Prod_Id"
+                                   class="bi bi-heart-fill text-danger ms-2"
+                                   style="cursor: pointer; font-size: 1.3rem;"
+                                   onclick="removeFavorite(@item.Prod_Id)"></i>
+                            </div>
+
+                            <div class="mb-2">
+                                <span class="badge bg-light text-secondary border">@item.Prod_Brand</span>
+                            </div>
+
+                            <p class="card-text text-muted small mt-2">@item.Prod_Specification</p>
+
+                            <div class="mt-auto pt-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-danger fs-4 fw-bold">NT$ @item.Prod_Price.ToString("N0")</span>
+                                    <a href="@item.Prod_Url" target="_blank" class="btn btn-primary btn-sm px-3">
+                                        <i class="bi bi-cart-fill"></i> 前往購買
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@* --- 【移除收藏的 JavaScript】 --- *@
+<script>
+    function removeFavorite(productId) {
+        // 在我的最愛頁面點擊，通常是為了移除，直接執行 Toggle
+        fetch('/MyFavorite/ToggleFavorite?prodId=' + productId, {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.status === "removed") {
+                    // 找到對應的卡片元素
+                    var card = document.getElementById('fav-item-' + productId);
+
+                    // 動畫效果：淡出並縮小
+                    card.style.transition = "0.4s ease";
+                    card.style.opacity = "0";
+                    card.style.transform = "scale(0.8)";
+
+                    setTimeout(() => {
+                        card.remove();
+                        // 如果刪到沒東西了，重新整理顯示「目前無收藏」提示
+                        if (document.querySelectorAll('.product-card').length === 0) {
+                            location.reload();
+                        }
+                    }, 400);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+</script>
+
+@* --- 複用主頁的 Style --- *@
+<style>
+    .product-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        border-radius: 12px;
+    }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12) !important;
+        }
+
+    .card-img-container {
+        height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fff;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .card-img-top {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .card-title {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: 1.1rem;
+        line-height: 1.4;
+    }
+</style>

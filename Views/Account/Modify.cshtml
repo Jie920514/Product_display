@@ -1,0 +1,40 @@
+﻿@model 商品展示系統.Models.Member
+
+@{
+    ViewData["Title"] = "修改個人資料";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2 class="mb-4">修改個人資料</h2>
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">@ViewBag.Error</div>
+            }
+            <form asp-action="Modify" method="post">
+                <div class="mb-3">
+                    <label class="form-label">名稱</label>
+                    <input asp-for="Name" class="form-control" placeholder="請輸入名稱" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">帳號 (不可修改)</label>
+                    <input asp-for="Account" type="text" class="form-control" value="@Model.Account" disabled />
+                    @*<input asp-for="Account" type="text" class="form-control bg-light" readonly />*@
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">電子信箱</label>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="請輸入電子信箱" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">新密碼</label>
+                    <input asp-for="Password" name = "password" type="password" class="form-control" placeholder="請輸入密碼" required />
+                    <input asp-for="Password" name = "password_check" type="password" class="form-control mt-1" placeholder="請再次輸入密碼" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary">儲存修改</button>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">返回</a>
+            </form>
+        </div>
+    </div>
+</div>

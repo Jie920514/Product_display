@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "會員登入";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow border-0">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-4">會員登入</h2>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+
+                <form asp-action="Login" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">帳號</label>
+                        <input name="account" class="form-control" placeholder="請輸入帳號" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">密碼</label>
+                        <input name="password" type="password" class="form-control" placeholder="請輸入密碼" required />
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary w-100">立即登入</button>
+                        <p class="text-muted small mt-3">
+                            <a asp-action="ForgetPassword" class="text-decoration-none">忘記密碼</a>
+                        </p>
+                    </div>
+
+
+                    <div class="text-center">
+                        <hr />
+                        <p class="text-muted small">還沒有帳號嗎？
+                            <a asp-action="Register" class="text-decoration-none">建立新帳號</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "會員註冊";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow border-0">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-4">會員註冊</h2>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+
+                <form asp-action="Register" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">名稱</label>
+                        <input name="Name" class="form-control" placeholder="請輸入名稱" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">電子信箱</label>
+                        <input name="Email" class="form-control" placeholder="請輸入帳號" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">帳號</label>
+                        <input name="account" class="form-control" placeholder="請輸入帳號" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">密碼</label>
+                        <input name="password" type="password" class="form-control" placeholder="請輸入密碼" required />
+                        <input name="password_check" type="password" class="form-control mt-1" placeholder="請再次輸入密碼" required />
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100">註冊</button>
+                        <button type="button" class="btn btn-secondary w-25" onclick="history.back()">返回</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

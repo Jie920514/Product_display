@@ -1,0 +1,153 @@
+﻿@model IEnumerable<商品展示系統.Models.Product>
+
+@{
+    ViewData["Title"] = "商品管理";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>商品管理中心</h2>
+        <div>
+            <button id="bulkDeleteBtn" class="btn btn-outline-danger me-2" style="display:none;" onclick="bulkDelete()">刪除選中項</button>
+            <button class="btn btn-primary" onclick="openCreateModal()">+ 新增商品</button>
+        </div>
+    </div>
+
+    <table class="table table-hover border-top">
+        <thead>
+            <tr>
+                <th width="40"><input type="checkbox" id="checkAll" /></th>
+                <th>名稱</th>
+                <th width="150">價格</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><input type="checkbox" class="item-check" value="@item.Prod_Id" /></td>
+                    <td>
+                        <a href="javascript:void(0)" class="text-decoration-none fw-bold" onclick="openEditModal(@item.Prod_Id)">
+                            @item.Prod_Name
+                        </a>
+                    </td>
+                    <td>@item.Prod_Price.ToString("C0")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">商品詳細資訊</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="productForm" asp-action="SaveProduct" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="Prod_Id" name="Prod_Id" value="0" />
+
+                    <div class="mb-3">
+                        <label class="form-label">產品名稱</label>
+                        <input type="text" id="Prod_Name" name="Prod_Name" class="form-control" required />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">品牌</label>
+                            <input type="text" id="Prod_Brand" name="Prod_Brand" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">價格</label>
+                            <input type="number" id="Prod_Price" name="Prod_Price" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">規格說明</label>
+                        <textarea id="Prod_Specification" name="Prod_Specification" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">商品圖片網址</label>
+                        <input type="text" id="Prod_Image_Url" name="Prod_Image_Url" class="form-control mb-2" placeholder="商品圖片網址" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">賣場網址</label>
+                        <input type="text" id="Prod_Url" name="Prod_Url" class="form-control" placeholder="完整連結" />
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">返回</button>
+                        <button type="submit" class="btn btn-primary">儲存</button>
+                    </div>
+
+                    <button type="button" id="deleteBtn" class="btn btn-danger" style="display:none;" onclick="confirmDelete()">刪除</button
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 1. 處理全選/單選與批量按鈕顯示
+        $('#checkAll').on('change', function () {
+            $('.item-check').prop('checked', $(this).prop('checked'));
+            toggleBulkDeleteBtn();
+        });
+
+        $(document).on('change', '.item-check', toggleBulkDeleteBtn);
+
+        function toggleBulkDeleteBtn() {
+            const count = $('.item-check:checked').length;
+            $('#bulkDeleteBtn').text(`一鍵刪除 (${count})`).toggle(count > 0);
+        }
+
+        // 2. 開啟新增視窗
+        function openCreateModal() {
+            $('#productForm')[0].reset();
+            $('#Prod_Id').val(0);
+            $('#deleteBtn').hide();
+            $('#detailModal').modal('show');
+        }
+
+        // 3. 開啟編輯視窗 (透過 AJAX 抓取資料)
+        function openEditModal(id) {
+            $.get(`/Products/GetProductJson/${id}`, function (data) {
+                $('#Prod_Id').val(data.prod_Id);
+                $('#Prod_Name').val(data.prod_Name);
+                $('#Prod_Brand').val(data.prod_Brand);
+                $('#Prod_Price').val(data.prod_Price);
+                $('#Prod_Specification').val(data.prod_Specification);
+                $('#Prod_Image_Url').val(data.prod_Image_Url);
+                $('#Prod_Url').val(data.prod_Url);
+
+                $('#deleteBtn').show();
+                $('#detailModal').modal('show');
+            });
+        }
+
+        // 4. 單筆刪除功能
+        function confirmDelete() {
+            if (confirm("⚠️ 確定要刪除這筆商品嗎？")) {
+                const id = $('#Prod_Id').val();
+                if (id && id !== "0") {
+                    // 使用相對路徑，確保抓得到你的 Delete 方法
+                    window.location.href = '/Products/Delete/' + id;
+                }
+            }
+        }
+
+        // 5. 批量刪除功能 (簡單版：透過 URL 傳送 ID 陣列)
+        function bulkDelete() {
+            const ids = $('.item-check:checked').map((_, el) => el.value).get();
+            if (confirm(`⚠️確定要刪除這 ${ids.length} 筆資料嗎？`)) {
+                window.location.href = `/Products/BulkDelete?ids=${ids.join(',')}`;
+            }
+        }
+    </script>
+}
